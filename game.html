@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💪 Elite Gym Clicker 💪</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--prestige-bg, radial-gradient(ellipse at center, #2c3e50 0%, #1a252f 50%, #0f1419 100%));
+            color: #fff;
+            min-height: 100vh;
+            max-width: 600px;
+            margin: 0 auto;
+            overflow-x: hidden;
+            transition: background 2s ease;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><radialGradient id="g"><stop offset="20%" stop-color="rgba(255,255,255,0.1)"/><stop offset="100%" stop-color="transparent"/></radialGradient></defs><circle cx="25" cy="25" r="2" fill="url(%23g)"/><circle cx="75" cy="75" r="1.5" fill="url(%23g)"/><circle cx="10" cy="60" r="1" fill="url(%23g)"/><circle cx="90" cy="40" r="2.5" fill="url(%23g)"/></svg>') repeat;
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .game-container {
+            padding: 15px;
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stats-panel {
+            background: linear-gradient(145deg, rgba(0, 0, 0, 0.8), rgba(30, 30, 30, 0.9));
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 2px solid rgba(255, 107, 53, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 14px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid var(--accent-color, #ff6b35);
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: var(--accent-color, #ff6b35);
+            text-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: linear-gradient(90deg, #2c3e50, #34495e);
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 15px 0;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b35, #f7931e, #ffaa00);
+            transition: width 0.5s ease;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(255, 107, 53, 0.6);
+        }
+
+        .rare-event-panel {
+            background: linear-gradient(145deg, rgba(255, 215, 0, 0.15), rgba(255, 140, 0, 0.1));
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 3px solid #ffd700;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+            animation: rareGlow 3s ease-in-out infinite alternate;
+        }
+
+        .rare-event-panel.hidden {
+            display: none;
+        }
+
+        @keyframes rareGlow {
+            0% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.5); }
+            100% { box-shadow: 0 0 50px rgba(255, 215, 0, 0.8); }
+        }
+
+        .rare-event-item {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.1));
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border: 2px solid #ffd700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+        }
+
+        .rare-event-item:hover {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.4), rgba(255, 165, 0, 0.2));
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
+        }
+
+        .rare-event-item::before {
+            content: '✨';
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-size: 20px;
+            animation: sparkle 2s ease-in-out infinite;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.8; }
+            50% { transform: scale(1.2) rotate(180deg); opacity: 1; }
+        }
+
+        .boss-panel {
+            background: linear-gradient(145deg, rgba(139, 0, 0, 0.9), rgba(75, 0, 0, 0.8));
+            padding: 25px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            border: 4px solid #ff0000;
+            box-shadow: 0 0 40px rgba(255, 0, 0, 0.6);
+            text-align: center;
+            animation: bossGlow 3s infinite alternate;
+            backdrop-filter: blur(10px);
+        }
+
+        .boss-panel.hidden {
+            display: none;
+        }
+
+        @keyframes bossGlow {
+            0% { box-shadow: 0 0 40px rgba(255, 0, 0, 0.6); }
+            100% { box-shadow: 0 0 60px rgba(255, 0, 0, 0.9); }
+        }
+
+        .boss-avatar {
+            font-size: 100px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            user-select: none;
+            display: inline-block;
+            filter: drop-shadow(0 0 15px rgba(255, 0, 0, 0.8));
+        }
+
+        .boss-avatar:hover {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .boss-avatar:active {
+            transform: scale(0.95);
+        }
+
+        .boss-avatar.damaged {
+            animation: bossDamage 0.4s ease;
+        }
+
+        @keyframes bossDamage {
+            0%, 100% { transform: scale(1); filter: hue-rotate(0deg); }
+            25% { transform: scale(0.9) rotate(-10deg); filter: hue-rotate(90deg); }
+            75% { transform: scale(0.9) rotate(10deg); filter: hue-rotate(-90deg); }
+        }
+
+        .boss-health-bar {
+            width: 100%;
+            height: 30px;
+            background: linear-gradient(90deg, #2c3e50, #34495e);
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 15px 0;
+            border: 2px solid #666;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .boss-health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+            transition: width 0.3s ease;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(231, 76, 60, 0.6);
+        }
+
+        .clicker-area {
+            text-align: center;
+            margin: 40px 0;
+            position: relative;
+            background: radial-gradient(circle, rgba(255,107,53,0.1) 0%, transparent 80%);
+            border-radius: 50%;
+            padding: 60px;
+            border: 4px solid rgba(255,107,53,0.4);
+            transition: all 0.4s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .clicker-area.active {
+            box-shadow: 0 0 50px rgba(255,107,53,0.8);
+            border-color: rgba(255,107,53,1);
+            background: radial-gradient(circle, rgba(255,107,53,0.2) 0%, transparent 80%);
+        }
+
+        .clicker-area.boss-mode {
+            background: radial-gradient(circle, rgba(255,0,0,0.2) 0%, transparent 80%);
+            border-color: rgba(255,0,0,0.6);
+        }
+
+        .barbell-man {
+            font-size: var(--man-size, 100px);
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.2s ease, filter 0.8s ease;
+            display: inline-block;
+            filter: drop-shadow(0 0 20px rgba(255,107,53,0.7)) var(--prestige-filter, none);
+            position: relative;
+        }
+
+        .barbell-man:hover {
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 30px rgba(255,107,53,1)) var(--prestige-filter, none);
+        }
+
+        .barbell-man:active {
+            transform: scale(0.9);
+        }
+
+        .barbell-man.animate {
+            animation: lift 0.5s ease;
+        }
+
+        .barbell-man.critical-hit {
+            animation: criticalFlash 0.8s ease;
+        }
+
+        @keyframes lift {
+            0% { transform: translateY(0px) scale(1); }
+            30% { transform: translateY(-20px) scale(1.05); }
+            60% { transform: translateY(-25px) scale(1.1); }
+            100% { transform: translateY(0px) scale(1); }
+        }
+
+        @keyframes criticalFlash {
+            0%, 100% { filter: brightness(1) hue-rotate(0deg); }
+            25% { filter: brightness(2) hue-rotate(90deg); }
+            50% { filter: brightness(3) hue-rotate(180deg); }
+            75% { filter: brightness(2) hue-rotate(270deg); }
+        }
+
+        .click-effect {
+            position: absolute;
+            font-weight: bold;
+            font-size: 22px;
+            color: #ff6b35;
+            pointer-events: none;
+            animation: floatUp 2s ease-out forwards;
+            text-shadow: 0 0 10px rgba(255,107,53,1);
+            z-index: 100;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0px) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-80px) scale(1.3);
+            }
+        }
+
+        .upgrades-panel {
+            background: linear-gradient(145deg, rgba(0, 0, 0, 0.8), rgba(30, 30, 30, 0.9));
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 107, 53, 0.3);
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .upgrade-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .upgrade-item {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.4s ease;
+            text-align: center;
+            position: relative;
+            backdrop-filter: blur(5px);
+        }
+
+        .upgrade-item:hover {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+            border-color: #ff6b35;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 107, 53, 0.3);
+        }
+
+        .upgrade-item.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .upgrade-item.affordable {
+            box-shadow: 0 0 25px rgba(255,107,53,0.5);
+            border-color: #ff6b35;
+            animation: affordableGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes affordableGlow {
+            0% { box-shadow: 0 0 25px rgba(255,107,53,0.5); }
+            100% { box-shadow: 0 0 35px rgba(255,107,53,0.8); }
+        }
+
+        .upgrade-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+            display: block;
+            filter: drop-shadow(0 0 10px rgba(255,107,53,0.5));
+        }
+
+        .achievements-panel {
+            background: linear-gradient(145deg, rgba(0, 0, 0, 0.8), rgba(30, 30, 30, 0.9));
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .achievement-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .achievement-item {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 11px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .achievement-item.unlocked {
+            background: linear-gradient(145deg, rgba(255, 215, 0, 0.3), rgba(255, 165, 0, 0.2));
+            border-color: #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+            animation: achievementGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes achievementGlow {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px;
+            background: linear-gradient(145deg, #ff6b35, #f7931e);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255,107,53,0.5);
+            background: linear-gradient(145deg, #f7931e, #ff6b35);
+        }
+
+        .prestige-btn {
+            width: 100%;
+            margin-top: 20px;
+            background: linear-gradient(145deg, #9b59b6, #8e44ad);
+            padding: 20px;
+            font-size: 18px;
+            box-shadow: 0 4px 15px rgba(155, 89, 182, 0.3);
+        }
+
+        .prestige-btn:hover {
+            background: linear-gradient(145deg, #8e44ad, #9b59b6);
+            box-shadow: 0 8px 25px rgba(155, 89, 182, 0.5);
+        }
+
+        .prestige-btn:disabled {
+            background: linear-gradient(145deg, #555, #444);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        h1 {
+            text-align: center;
+            background: linear-gradient(45deg, #ff6b35, #ffd700, #ff6b35);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 25px;
+            font-size: 32px;
+            text-shadow: 0 0 20px rgba(255,107,53,0.5);
+            animation: titleGlow 4s ease-in-out infinite;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        h3 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #ff6b35;
+            text-shadow: 0 0 10px rgba(255,107,53,0.5);
+            font-size: 18px;
+        }
+
+        .milestone-notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(145deg, rgba(255, 215, 0, 0.95), rgba(255, 140, 0, 0.9));
+            color: #000;
+            padding: 30px;
+            border-radius: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            z-index: 1000;
+            border: 3px solid #ffd700;
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.8);
+            animation: milestoneAppear 3s ease-out forwards;
+            backdrop-filter: blur(10px);
+        }
+
+        @keyframes milestoneAppear {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            10% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+            90% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>💪 ELITE GYM CLICKER 💪</h1>
+        
+        <div class="stats-panel">
+            <div class="stat-row">
+                <span>💪 Strength:</span>
+                <span class="stat-value" id="strength">0</span>
+            </div>
+            <div class="stat-row">
+                <span>⚡ STR per Click:</span>
+                <span class="stat-value" id="strPerClick">1</span>
+            </div>
+            <div class="stat-row">
+                <span>🔄 Passive STR/sec:</span>
+                <span class="stat-value" id="passiveSTR">0</span>
+            </div>
+            <div class="stat-row">
+                <span>🏆 Prestige Level:</span>
+                <span class="stat-value" id="prestigeLevel">0 (Novice)</span>
+            </div>
+            <div class="stat-row">
+                <span>📈 STR Multiplier:</span>
+                <span class="stat-value" id="strengthBoost">0%</span>
+            </div>
+            <div class="stat-row">
+                <span>🏅 Lifetime STR:</span>
+                <span class="stat-value" id="totalGains">0</span>
+            </div>
+            <div class="stat-row">
+                <span>👹 Bosses Defeated:</span>
+                <span class="stat-value" id="bossesDefeated">0</span>
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            <div style="text-align: center; font-size: 14px; color: #aaa; margin-top: 10px;">
+                Next Prestige: <span id="progressText">0 / 10,000</span>
+            </div>
+        </div>
+
+        <!-- Rare Event Panel -->
+        <div class="rare-event-panel hidden" id="rareEventPanel">
+            <h3 style="color: #ffd700; margin-bottom: 15px;">✨ RARE OPPORTUNITY! ✨</h3>
+            <div id="rareEventContent">
+                <!-- Dynamic rare events will appear here -->
+            </div>
+        </div>
+
+        <!-- Boss Battle Panel -->
+        <div class="boss-panel hidden" id="bossPanel">
+            <div style="margin-bottom: 15px;">
+                <div style="font-size: 24px; font-weight: bold; color: #ff6666; margin-bottom: 8px;" id="bossName">Boss Name</div>
+                <div id="bossQuote" style="font-style: italic; color: #ffaaaa;">"Boss Quote"</div>
+            </div>
+            
+            <div class="boss-avatar" id="bossAvatar">💀</div>
+            
+            <div class="boss-health-bar">
+                <div class="boss-health-fill" id="bossHealthFill" style="width: 100%"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin: 15px 0; font-size: 14px;">
+                <span>❤️ HP: <span id="bossCurrentHP">1000</span> / <span id="bossMaxHP">1000</span></span>
+                <span id="bossReward" style="color: #ffd700;">💰 Reward: +500 STR</span>
+            </div>
+            <div style="font-size: 16px; color: #ffaaaa;" id="bossTimer">⏱️ Time Left: 60s</div>
+        </div>
+
+        <div class="clicker-area" id="clickerArea">
+            <div class="barbell-man" id="barbellMan">🏋️‍♂️</div>
+        </div>
+
+        <div class="achievements-panel">
+            <h3>🏆 ACHIEVEMENTS</h3>
+            <div class="achievement-grid" id="achievementGrid">
+                <!-- Achievements will be populated here -->
+            </div>
+        </div>
+
+        <div class="upgrades-panel">
+            <h3>⬆️ TRAINING EQUIPMENT</h3>
+            <div class="upgrade-grid">
+                <div class="upgrade-item" id="treadmill">
+                    <div class="upgrade-icon">🏃‍♂️</div>
+                    <div style="font-weight: bold; margin-bottom: 5px;">Treadmill</div>
+                    <div style="font-size: 12px; color: #aaa; margin-bottom: 8px;">+0.5 STR/sec</div>
+                    <div style="font-size: 13px; color: #ffd700; font-weight: bold;" class="upgrade-cost">100 STR</div>
+                    <div style="font-size: 11px; color: #888;" class="upgrade-owned">Owned: 0</div>
+                </div>
+                
+                <div class="upgrade-item" id="dumbbells">
+                    <div class="upgrade-icon">🏋️</div>
+                    <div style="font-weight: bold; margin-bottom: 5px;">Dumbbells</div>
+                    <div style="font-size: 12px; color: #aaa; margin-bottom: 8px;">+1 STR per click</div>
+                    <div style="font-size: 13px; color: #ffd700; font-weight: bold;" class="upgrade-cost">500 STR</div>
+                    <div style="font-size: 11px; color: #888;" class="upgrade-owned">Owned: 0</div>
+                </div>
+                
+                <div class="upgrade-item" id="proteinShake">
+                    <div class="upgrade-icon">🥤</div>
+                    <div style="font-weight: bold; margin-bottom: 5px;">Protein Shake</div>
+                    <div style="font-size: 12px; color: #aaa; margin-bottom: 8px;">+5% STR multiplier</div>
+                    <div style="font-size: 13px; color: #ffd700; font-weight: bold;" class="upgrade-cost">5,000 STR</div>
+                    <div style="font-size: 11px; color: #888;" class="upgrade-owned">Owned: 0</div>
+                </div>
+                
+                <div class="upgrade-item" id="personalTrainer">
+                    <div class="upgrade-icon">👨‍🏫</div>
+                    <div style="font-weight: bold; margin-bottom: 5px;">Personal Trainer</div>
+                    <div style="font-size: 12px; color: #aaa; margin-bottom: 8px;">+10 STR/sec</div>
+                    <div style="font-size: 13px; color: #ffd700; font-weight: bold;" class="upgrade-cost">25,000 STR</div>
+                    <div style="font-size: 11px; color: #888;" class="upgrade-owned">Owned: 0</div>
+                </div>
+            </div>
+            
+            <button class="btn prestige-btn" id="prestigeBtn" disabled>
+                🏆 PRESTIGE - ASCEND TO GREATNESS (Requires 10,000 STR)
+            </button>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="btn" id="saveBtn">💾 SAVE</button>
+            <button class="btn" id="loadBtn">📁 LOAD</button>
+            <button class="btn" id="resetBtn">🔄 RESET</button>
+        </div>
+    </div>
+
+    <script>
+        // ...existing code...
+        // The full JavaScript code you provided above
+        // ...existing code...
+    </script>
+</body>
+<script src="https://cdn.rawgit.com/zloirock/core-js/master/client/shim.min.js"></script>
+</html>
